@@ -9,6 +9,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { JarvisClient } from "./client.js";
 import { Cache } from "./cache.js";
 import { createMcpServer } from "./server.js";
+import { detectWorkspace } from "./workspace.js";
 import { startWatcher, stopWatcher } from "./watcher.js";
 
 const JARVIS_API_KEY = process.env.JARVIS_API_KEY ?? "";
@@ -24,7 +25,8 @@ if (!JARVIS_API_KEY) {
 
 const client = new JarvisClient(JARVIS_URL, JARVIS_API_KEY);
 const cache = new Cache();
-const server = createMcpServer(client, cache);
+const workspace = JARVIS_WORKSPACE ? detectWorkspace(JARVIS_WORKSPACE) : null;
+const server = createMcpServer({ client, cache, workspace });
 
 async function main() {
   if (JARVIS_WORKSPACE) startWatcher(JARVIS_WORKSPACE, cache);

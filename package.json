@@ -1,6 +1,6 @@
 {
   "name": "@abhishek-0118/jarvis-mcp",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Jarvis MCP server — connect Cursor (or any MCP client) to the Jarvis code-intelligence engine",
   "type": "module",
   "bin": {

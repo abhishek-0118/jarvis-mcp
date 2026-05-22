@@ -48,7 +48,7 @@ const httpServer = http.createServer(async (req, res) => {
       sessions.delete(transport.sessionId);
     });
 
-    const server = createMcpServer(client, cache);
+    const server = createMcpServer({ client, cache });
     await server.connect(transport);
     return;
   }
