@@ -24,7 +24,7 @@ Edit `.env`:
 
 ```env
 JARVIS_API_KEY=sk-jarvis-xxxxxxxxxxxxx
-JARVIS_URL=https://jarvis.orangehealth.dev
+JARVIS_URL=https://jarvis-api.orangehealth.dev
 PORT=3100
 ```
 
