@@ -1,0 +1,11 @@
+services:
+  jarvis-mcp:
+    build: .
+    container_name: jarvis-mcp
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3100}:3100"
+    env_file:
+      - .env
+    environment:
+      - PORT=3100
