@@ -1,6 +1,4 @@
-/**
- * HTTP client for the Jarvis /mcp/* backend endpoints.
- */
+import type { WorkspaceMetadata } from "./server.js";
 
 export class JarvisClient {
   private baseUrl: string;
@@ -46,26 +44,40 @@ export class JarvisClient {
 
   async ask(
     query: string,
-    repo?: string
+    repo?: string,
+    depth: string = "moderate",
+    metadata?: WorkspaceMetadata | null,
   ): Promise<{
     answer: string;
     sources: any[];
     summary: any;
     files_referenced: string[];
   }> {
-    return this.post("/mcp/ask", { query, repo: repo ?? null });
+    return this.post("/mcp/ask", {
+      query,
+      repo: repo ?? null,
+      depth,
+      metadata: metadata ?? null,
+    });
   }
 
   async search(
     query: string,
-    repo?: string
+    repo?: string,
+    depth: string = "moderate",
+    metadata?: WorkspaceMetadata | null,
   ): Promise<{
     context: string;
     sources: any[];
     summary: any;
     files_referenced: string[];
   }> {
-    return this.post("/mcp/search", { query, repo: repo ?? null });
+    return this.post("/mcp/search", {
+      query,
+      repo: repo ?? null,
+      depth,
+      metadata: metadata ?? null,
+    });
   }
 
   async repos(): Promise<{

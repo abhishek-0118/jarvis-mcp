@@ -31,8 +31,8 @@ export class Cache {
     this.sweepTimer = setInterval(() => this.sweep(), SWEEP_INTERVAL_MS);
   }
 
-  private keyFor(query: string, repo?: string): string {
-    const raw = `${query}|${repo ?? ""}`;
+  private keyFor(query: string, repo?: string, depth?: string): string {
+    const raw = `${query}|${repo ?? ""}|${depth ?? "moderate"}`;
     return crypto.createHash("sha256").update(raw).digest("hex");
   }
 
@@ -40,8 +40,8 @@ export class Cache {
     return path.join(this.dir, `${key}.json`);
   }
 
-  get(query: string, repo?: string): CacheEntry | null {
-    const fp = this.filePath(this.keyFor(query, repo));
+  get(query: string, repo?: string, depth?: string): CacheEntry | null {
+    const fp = this.filePath(this.keyFor(query, repo, depth));
     try {
       const data: StoredEntry = JSON.parse(fs.readFileSync(fp, "utf-8"));
       if (Date.now() - data.ts > TTL_MS) {
@@ -54,8 +54,8 @@ export class Cache {
     }
   }
 
-  set(query: string, repo: string | undefined, entry: CacheEntry): void {
-    const key = this.keyFor(query, repo);
+  set(query: string, repo: string | undefined, depth: string | undefined, entry: CacheEntry): void {
+    const key = this.keyFor(query, repo, depth);
     const stored: StoredEntry = {
       query,
       repo: repo ?? null,

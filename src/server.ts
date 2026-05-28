@@ -3,13 +3,19 @@
  * Both stdio (index.ts) and SSE (sse-server.ts) entry points use this.
  */
 
-import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { JarvisClient } from "./client.js";
 import { Cache } from "./cache.js";
 import type { WorkspaceInfo } from "./workspace.js";
 
 const PKG_VERSION = "0.1.0";
+
+export interface WorkspaceMetadata {
+  workspace_repo: string | null;
+  workspace_dir: string | null;
+  git_remote: string | null;
+}
 
 interface ServerOptions {
   client: JarvisClient;
@@ -25,39 +31,49 @@ export function createMcpServer({ client, cache, workspace }: ServerOptions): Mc
 
   const currentRepo = workspace?.repoName ?? undefined;
 
-  // ── Tools ──
+  const metadata: WorkspaceMetadata = {
+    workspace_repo: workspace?.repoName ?? null,
+    workspace_dir: workspace?.dirName ?? null,
+    git_remote: workspace?.gitRemote ?? null,
+  };
+
+  const depthSchema = z
+    .enum(["moderate", "high", "max"])
+    .default("moderate")
+    .describe(
+      'Search depth. Use "max" when the user says "jarvis max mode" or wants thorough results. Use "high" for moderately detailed queries. Defaults to "moderate".'
+    );
+
+  const repoDesc = (suffix: string) =>
+    `Repository name to search.${
+      currentRepo
+        ? ` Defaults to "${currentRepo}" (current workspace).${suffix}`
+        : " Omit to search all indexed repos."
+    }`;
 
   server.tool(
     "jarvis_ask",
-    `Ask Jarvis a question about the codebase. ONLY use this tool when the user explicitly says "use jarvis" in their message.${
+    `Ask Jarvis a question about the codebase. ONLY use this tool when the user explicitly says "use jarvis" in their message. When the user says "use jarvis max mode" or "jarvis deep search", set depth to "max".${
       currentRepo
         ? ` The user is currently working in the "${currentRepo}" repository.`
         : ""
     }`,
     {
       query: z.string().describe("The question to ask about the codebase"),
-      repo: z
-        .string()
-        .optional()
-        .describe(
-          `Repository name to search.${
-            currentRepo
-              ? ` Defaults to "${currentRepo}" (current workspace). Pass a different name to search another repo, or omit to search all.`
-              : " Omit to search all indexed repos."
-          }`
-        ),
+      repo: z.string().optional().describe(repoDesc(" Pass a different name to search another repo, or omit to search all.")),
+      depth: depthSchema,
     },
-    async ({ query, repo }) => {
+    async ({ query, repo, depth }) => {
       const effectiveRepo = repo ?? currentRepo;
-      const cached = cache.get(query, effectiveRepo);
+      const cached = cache.get(query, effectiveRepo, depth);
       if (cached) {
         return {
           content: [{ type: "text" as const, text: cached.answer }],
         };
       }
 
-      const result = await client.ask(query, effectiveRepo);
-      cache.set(query, effectiveRepo, {
+      const result = await client.ask(query, effectiveRepo, depth, metadata);
+      cache.set(query, effectiveRepo, depth, {
         answer: result.answer,
         files_referenced: result.files_referenced ?? [],
       });
@@ -70,27 +86,19 @@ export function createMcpServer({ client, cache, workspace }: ServerOptions): Mc
 
   server.tool(
     "jarvis_search",
-    `Search the Jarvis code index for relevant code snippets. ONLY use this tool when the user explicitly says "use jarvis" in their message.${
+    `Search the Jarvis code index for relevant code snippets. ONLY use this tool when the user explicitly says "use jarvis" in their message. When the user says "use jarvis max mode" or "jarvis deep search", set depth to "max".${
       currentRepo
         ? ` The user is currently in the "${currentRepo}" repository.`
         : ""
     }`,
     {
       query: z.string().describe("The search query"),
-      repo: z
-        .string()
-        .optional()
-        .describe(
-          `Repository name to search.${
-            currentRepo
-              ? ` Defaults to "${currentRepo}" (current workspace).`
-              : " Omit to search all indexed repos."
-          }`
-        ),
+      repo: z.string().optional().describe(repoDesc("")),
+      depth: depthSchema,
     },
-    async ({ query, repo }) => {
+    async ({ query, repo, depth }) => {
       const effectiveRepo = repo ?? currentRepo;
-      const result = await client.search(query, effectiveRepo);
+      const result = await client.search(query, effectiveRepo, depth, metadata);
       const summary = [
         `Found ${result.sources?.length ?? 0} sources across ${
           result.summary?.repositories?.length ?? 0
