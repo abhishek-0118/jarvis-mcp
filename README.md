@@ -67,10 +67,10 @@ If you prefer running directly on your machine:
   "mcpServers": {
     "jarvis": {
       "command": "npx",
-      "args": ["-y", "@anthropic/jarvis-mcp"],
+      "args": ["-y", "@orangehealth/jarvis-mcp"],
       "env": {
         "JARVIS_API_KEY": "sk-jarvis-...",
-        "JARVIS_URL": "https://jarvis.orangehealth.dev",
+        "JARVIS_URL": "https://jarvis-api.orangehealth.dev",
         "JARVIS_WORKSPACE": "${workspaceFolder}"
       }
     }
@@ -81,7 +81,7 @@ If you prefer running directly on your machine:
 Or install globally:
 
 ```bash
-npm install -g @anthropic/jarvis-mcp
+npm install -g @orangehealth/jarvis-mcp
 ```
 
 Then use `"command": "jarvis-mcp"` instead of npx.
@@ -110,7 +110,7 @@ Then use `"command": "jarvis-mcp"` instead of npx.
 
 ```
 Cursor ──(MCP over SSE)──► jarvis-mcp container ──(HTTP)──► Jarvis backend
-                           localhost:3100                    jarvis.orangehealth.dev
+                           localhost:3100                    jarvis-api.orangehealth.dev
 ```
 
 - **Docker mode** — runs an HTTP server with SSE transport. Cursor connects via `"url"`.
